@@ -5,6 +5,7 @@ import os
 import random
 import sys
 from pathlib import Path
+from sys import argv
 
 import cocotb
 from cocotb.runner import get_runner
@@ -57,8 +58,14 @@ def test_adder_runner():
 
     This file can be run directly or via pytest discovery.
     """
+
+    style = 'text'
+    if len(argv) > 1:
+        style = argv[1]
+    assert style in ('text', 'gui', 'vis')
+
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
-    sim = os.getenv("SIM", "icarus")
+    sim = os.getenv("SIM", "questa")
 
     proj_path = Path(__file__).resolve().parent.parent
     # equivalent to setting the PYTHONPATH environment variable
@@ -87,8 +94,13 @@ def test_adder_runner():
         always=True,
         build_args=build_test_args,
     )
+
+    test_args = list(build_test_args)
+    if style == 'vis':
+        test_args.extend(('-visualizer', '-qwavedb=+signal+memory+vhdlvariable'))
+
     runner.test(
-        hdl_toplevel="adder", test_module="test_adder", test_args=build_test_args
+        hdl_toplevel="adder", test_module="test_adder", test_args=test_args, gui=(style != 'text')
     )
 
 
